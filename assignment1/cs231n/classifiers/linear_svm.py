@@ -59,7 +59,7 @@ def svm_loss_vectorized(W, X, targets, reg):
 
     Inputs and outputs are the same as svm_loss_naive.
     """
-    
+
     # Initialise
     delta = 1
     total_loss = 0.0

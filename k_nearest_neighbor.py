@@ -82,6 +82,9 @@ class KNearestNeighbor(object):
         num_train = self.X_train.shape[0]
         dists = np.zeros((num_test, num_train))
         for i in range(num_test):
+            if i % 100 == 0:
+                print(i)
+            # print(self.X_train.shape, X[i, :].reshape(1,-1).shape)
             distance = np.linalg.norm(self.X_train - X[i, :], axis=1)
             # print(distance.reshape(1,-1).shape)
             dists[i] = distance
@@ -95,12 +98,26 @@ class KNearestNeighbor(object):
 
         Input / Output: Same as compute_distances_two_loops
         """
-        # See https://stackoverflow.com/questions/27948363/numpy-broadcast-to-perform-euclidean-distance-vectorized
-        term1 = np.sum(self.X_train ** 2, axis=1).reshape(-1, 1)
-        term2 = 2 * self.X_train.dot(X.T)
-        term3 = np.sum(X ** 2, axis=1)
-        distances = np.sqrt(term1 - term2 + term3)
-        return distances.T
+        num_test = X.shape[0]
+        num_train = self.X_train.shape[0]
+        dists = np.zeros((num_test, num_train))
+        #########################################################################
+        # TODO:                                                                 #
+        # Compute the l2 distance between all test points and all training      #
+        # points without using any explicit loops, and store the result in      #
+        # dists.                                                                #
+        #                                                                       #
+        # You should implement this function using only basic array operations; #
+        # in particular you should not use functions from scipy.                #
+        #                                                                       #
+        # HINT: Try to formulate the l2 distance using matrix multiplication    #
+        #       and two broadcast sums.                                         #
+        #########################################################################
+        pass
+        #########################################################################
+        #                         END OF YOUR CODE                              #
+        #########################################################################
+        return dists
 
     def predict_labels(self, dists, k=1):
         """
