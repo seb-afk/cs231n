@@ -83,9 +83,7 @@ class KNearestNeighbor(object):
         dists = np.zeros((num_test, num_train))
         for i in range(num_test):
             distance = np.linalg.norm(self.X_train - X[i, :], axis=1)
-            # print(distance.reshape(1,-1).shape)
             dists[i] = distance
-
         return dists
 
     def compute_distances_no_loops(self, X):
@@ -96,6 +94,8 @@ class KNearestNeighbor(object):
         Input / Output: Same as compute_distances_two_loops
         """
         # See https://stackoverflow.com/questions/27948363/numpy-broadcast-to-perform-euclidean-distance-vectorized
+
+        # print(self.X_train.shape, X.shape)
         term1 = np.sum(self.X_train ** 2, axis=1).reshape(-1, 1)
         term2 = 2 * self.X_train.dot(X.T)
         term3 = np.sum(X ** 2, axis=1)
