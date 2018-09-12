@@ -102,7 +102,7 @@ class TwoLayerNet(object):
         # in the variable loss, which should be a scalar. Use the Softmax           #
         # classifier loss.                                                          #
         #############################################################################
-        data_loss = np.sum(-np.log(A2[range(N), y])) / N
+        data_loss = np.sum(-np.log(A2[range(N), y].clip(min=1e-20))) / N
         regularization_loss = reg * np.sum(W1 * W1) + reg * np.sum(W2 * W2)
         loss = data_loss + regularization_loss
 
