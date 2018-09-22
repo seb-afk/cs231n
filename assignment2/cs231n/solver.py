@@ -5,6 +5,7 @@ from builtins import range
 from builtins import object
 import os
 import pickle as pickle
+import logging
 
 import numpy as np
 
@@ -184,7 +185,7 @@ class Solver(object):
 
         # Perform a parameter update
         for p, w in self.model.params.items():
-            dw = grads[p]
+            dw = grads[p].squeeze()  # Add squeeze function to avoid
             config = self.optim_configs[p]
             next_w, next_config = self.update_rule(w, dw, config)
             self.model.params[p] = next_w
@@ -265,10 +266,16 @@ class Solver(object):
         for t in range(num_iterations):
             self._step()
 
-            # Maybe print training loss
+            # # Maybe print training loss
+            # if self.verbose and t % self.print_every == 0:
+            #     print('(Iteration %d / %d) loss: %f' % (
+            #            t + 1, num_iterations, self.loss_history[-1]))
+
+            # SEB log training error
             if self.verbose and t % self.print_every == 0:
-                print('(Iteration %d / %d) loss: %f' % (
-                       t + 1, num_iterations, self.loss_history[-1]))
+              msg = "Iteration {} / {} loss: {}".format(
+                     t + 1, num_iterations, self.loss_history[-1])
+              logging.debug(msg)
 
             # At the end of every epoch, increment the epoch counter and decay
             # the learning rate.
@@ -292,8 +299,9 @@ class Solver(object):
                 self._save_checkpoint()
 
                 if self.verbose:
-                    print('(Epoch %d / %d) train acc: %f; val_acc: %f' % (
+                    msg = ('(Epoch %d / %d) train acc: %f; val_acc: %f' % (
                            self.epoch, self.num_epochs, train_acc, val_acc))
+                    logging.info(msg)
 
                 # Keep track of the best model
                 if val_acc > self.best_val_acc:
