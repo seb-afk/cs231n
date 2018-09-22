@@ -92,8 +92,7 @@ class TwoLayerNet(object):
         A1, cache_a1 = relu_forward(Z1)
 
         Z2, cache_z2 = affine_forward(A1, W2, b2)
-        A2, cache_a2 = relu_forward(Z2)
-        scores = A2
+        scores = Z2
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -115,14 +114,13 @@ class TwoLayerNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # Compute loss
-        data_loss, da2 = softmax_loss(A2, y)
+        data_loss, da2 = softmax_loss(Z2, y)
         regularization_loss = 0.5 * (reg * np.sum(W1*W1) + reg * np.sum(W2*W2))
         loss = data_loss + regularization_loss
 
 
         # Compute gradients
-        dz2 = relu_backward(da2, cache_a2)
-        da1, dw2, db2 = affine_backward(dz2, cache_z2)
+        da1, dw2, db2 = affine_backward(da2, cache_z2)
         dz1 = relu_backward(da1,cache_a1)
         dx, dw1, db1 = affine_backward(dz1, cache_z1)
 
