@@ -5,6 +5,13 @@ import numpy as np
 from cs231n.layers import *
 from cs231n.layer_utils import *
 
+def softmax(x):
+    shifted_logits = x - np.max(x, axis=1, keepdims=True)
+    Z = np.sum(np.exp(shifted_logits), axis=1, keepdims=True)
+    log_probs = shifted_logits - np.log(Z)
+    probs = np.exp(log_probs)
+    return probs
+
 
 class TwoLayerNet(object):
     """
@@ -199,7 +206,15 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to ones and shift     #
         # parameters should be initialized to zeros.                               #
         ############################################################################
-        pass
+
+        self.params["W1"] = weight_scale * np.random.randn(input_dim, hidden_dims[0])
+        self.params["b1"] = np.zeros(hidden_dims[0])
+
+        for l_idx, _ in enumerate(hidden_dims[:-1]):
+            l_size = hidden_dims[l_idx+1]
+            l_size_prev = hidden_dims[l_idx]
+            self.params["W"+str(l_idx+2)] = weight_scale * np.random.randn(l_size_prev, l_size)
+            self.params["b"+str(l_idx+2)] = np.zeros(l_size)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -258,7 +273,25 @@ class FullyConnectedNet(object):
         # self.bn_params[1] to the forward pass for the second batch normalization #
         # layer, etc.                                                              #
         ############################################################################
-        pass
+        
+        activation = X
+        network_size = self.num_layers
+        cache_list = list()
+
+        # [AFFINE->RELU]*(L-1) 
+        for layer_index in range(1, network_size):
+            print(layer_index)
+            activation_prev = activation
+            activation, cache = affine_relu_forward(activation_prev, 
+                                                    self.params["W"+str(layer_index)],
+                                                    self.params["b"+str(layer_index)])
+            cache_list.append(cache)
+
+        # [AFFINE->SOFTMAX]
+        # TODO Is this even needed ?  
+        # scores = softmax(activation)
+        scores = affine_forward(activation, self.params["W"+str(network_size)],self.params["b"+str(network_size)])
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -281,7 +314,13 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        # Compute loss
+        data_loss, da2 = softmax_loss(scores, y)
+        regularization_loss = 0
+        for layer_index in range(1, network_size):
+            regularization_loss += 0.5 * self.reg * np.sum(self.params["W"+str(layer_index)]**2)
+        loss = data_loss + regularization_loss
+        print(data_loss, regularization_loss)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
