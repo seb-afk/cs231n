@@ -193,7 +193,7 @@ class FullyConnectedNet(object):
         self.num_layers = 1 + len(hidden_dims)
         self.dtype = dtype
         self.params = {}
-
+        network_size = len(hidden_dims)
         ############################################################################
         # TODO: Initialize the parameters of the network, storing all values in    #
         # the self.params dictionary. Store weights and biases for the first layer #
@@ -207,14 +207,16 @@ class FullyConnectedNet(object):
         # parameters should be initialized to zeros.                               #
         ############################################################################
 
-        self.params["W1"] = weight_scale * np.random.randn(input_dim, hidden_dims[0])
-        self.params["b1"] = np.zeros(hidden_dims[0])
+        self.params = {}
+        dims = [input_dim] + hidden_dims + [num_classes]
+        network_size = len(dims)
+        for layer_index in range(1, network_size):
+            l_size = dims[layer_index]
+            l_size_prev = dims[layer_index-1]
+            self.params["W"+str(layer_index)] = weight_scale * np.random.randn(l_size_prev, l_size)
+            self.params["b"+str(layer_index)] = np.zeros(l_size)
 
-        for l_idx, _ in enumerate(hidden_dims[:-1]):
-            l_size = hidden_dims[l_idx+1]
-            l_size_prev = hidden_dims[l_idx]
-            self.params["W"+str(l_idx+2)] = weight_scale * np.random.randn(l_size_prev, l_size)
-            self.params["b"+str(l_idx+2)] = np.zeros(l_size)
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -275,12 +277,11 @@ class FullyConnectedNet(object):
         ############################################################################
         
         activation = X
-        network_size = self.num_layers
+        network_size = len(self.params.keys()) // 2
         cache_list = list()
 
         # [AFFINE->RELU]*(L-1) 
         for layer_index in range(1, network_size):
-            print(layer_index)
             activation_prev = activation
             activation, cache = affine_relu_forward(activation_prev, 
                                                     self.params["W"+str(layer_index)],
@@ -290,8 +291,10 @@ class FullyConnectedNet(object):
         # [AFFINE->SOFTMAX]
         # TODO Is this even needed ?  
         # scores = softmax(activation)
-        scores = affine_forward(activation, self.params["W"+str(network_size)],self.params["b"+str(network_size)])
-
+        # print(activation.shape, self.params["W"+str(network_size)].shape)
+        scores, cache = affine_forward(activation,
+                                self.params["W"+str(network_size)],
+                                self.params["b"+str(network_size)])
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -320,7 +323,6 @@ class FullyConnectedNet(object):
         for layer_index in range(1, network_size):
             regularization_loss += 0.5 * self.reg * np.sum(self.params["W"+str(layer_index)]**2)
         loss = data_loss + regularization_loss
-        print(data_loss, regularization_loss)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
