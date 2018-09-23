@@ -3,3 +3,5 @@
 .env/*
 .idea/*
 assignment2/.vscode/settings.json
+*.so
+.ipynb_checkpoints/*
