@@ -4,4 +4,4 @@
 .idea/*
 assignment2/.vscode/settings.json
 *.so
-.ipynb_checkpoints/*
+assignment2/.ipynb_checkpoints/*
