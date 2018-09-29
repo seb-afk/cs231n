@@ -295,6 +295,7 @@ class FullyConnectedNet(object):
         scores, cache = affine_forward(activation,
                                 self.params["W"+str(network_size)],
                                 self.params["b"+str(network_size)])
+        cache_list.append(cache)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -318,13 +319,27 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # Compute loss
-        data_loss, da2 = softmax_loss(scores, y)
+        data_loss, dout = softmax_loss(scores, y)
         regularization_loss_total = 0
         for layer_index in range(1, network_size+1):
             regularization_loss_layer = .5 * self.reg * np.sum(self.params["W"+str(layer_index)]**2)
             regularization_loss_total += regularization_loss_layer
         loss = data_loss + regularization_loss_total
 
+        # Compute gradients
+        
+        # Last layer
+        dout, dw, db = affine_backward(dout, cache)
+        grads["W"+str(network_size)] = dw + self.reg * cache[1]
+        grads["b"+str(network_size)] = db
+
+        # n-1 layers
+        for layer_index in reversed(range(1, network_size)):
+            cache = cache_list[layer_index-1]
+            dout, dw, db = affine_relu_backward(dout, cache)
+
+            grads["W"+str(layer_index)] = dw + self.reg * cache[0][1]
+            grads["b"+str(layer_index)] = db
 
         ############################################################################
         #                             END OF YOUR CODE                             #
