@@ -319,10 +319,13 @@ class FullyConnectedNet(object):
         ############################################################################
         # Compute loss
         data_loss, da2 = softmax_loss(scores, y)
-        regularization_loss = 0
-        for layer_index in range(1, network_size):
-            regularization_loss += 0.5 * self.reg * np.sum(self.params["W"+str(layer_index)]**2)
-        loss = data_loss + regularization_loss
+        regularization_loss_total = 0
+        for layer_index in range(1, network_size+1):
+            regularization_loss_layer = .5 * self.reg * np.sum(self.params["W"+str(layer_index)]**2)
+            regularization_loss_total += regularization_loss_layer
+        loss = data_loss + regularization_loss_total
+
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
