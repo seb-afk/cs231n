@@ -3,3 +3,4 @@ im2col_cython.c
 im2col_cython.so
 .ipynb_checkpoints
 /.ipynb_checkpoints/
+/lecture_material/
