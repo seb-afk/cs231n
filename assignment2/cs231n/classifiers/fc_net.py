@@ -289,9 +289,6 @@ class FullyConnectedNet(object):
             cache_list.append(cache)
 
         # [AFFINE->SOFTMAX]
-        # TODO Is this even needed ?  
-        # scores = softmax(activation)
-        # print(activation.shape, self.params["W"+str(network_size)].shape)
         scores, cache = affine_forward(activation,
                                 self.params["W"+str(network_size)],
                                 self.params["b"+str(network_size)])
