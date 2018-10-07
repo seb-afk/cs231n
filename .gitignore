@@ -5,3 +5,6 @@
 assignment2/.vscode/settings.json
 *.so
 assignment2/.ipynb_checkpoints/*
+lecture_material/*
+assignment2/logs/*
+assignment2/cs231n/.vscode/settings.json
