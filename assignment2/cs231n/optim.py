@@ -1,5 +1,5 @@
 import numpy as np
-
+import warnings
 """
 This file implements various first-order update rules that are commonly used
 for training neural networks. Each update rule accepts current weights and the
@@ -152,7 +152,24 @@ def adam(w, dw, config=None):
     # NOTE: In order to match the reference output, please modify t _before_  #
     # using it in any calculations.                                           #
     ###########################################################################
-    pass
+    beta1 = config["beta1"]
+    beta2 = config["beta2"]
+    learning_rate = config["learning_rate"]
+    epsilon = config["epsilon"] 
+    m = config["m"] 
+    v = config["v"] 
+    config["t"] += 1
+    t = config["t"]
+    
+    m = (beta1 * m + (1 - beta1) * dw) 
+    m_unbias = m / (1 - beta1 ** t)
+    v =  (beta2 * v + (1 - beta2) * dw * dw) 
+    v_unbias = v / (1 - beta2 ** t)
+    w -= learning_rate * m_unbias / (np.sqrt(v_unbias) + epsilon)
+
+    config["m"] = m 
+    config["v"] = v
+    next_w = w
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
