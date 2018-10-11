@@ -200,7 +200,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
         # Stuff to return
         out = X_out
-        cache = (X_cent, var, sd, X_num, den, X_hat)
+        cache = (X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps)
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -222,10 +222,6 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         X_hat = X_num * den              # 7.
         X_gamma = gamma * X_hat          # 8.
         X_out = X_gamma + beta           # 9.
-
-        # Calculate running mean
-        running_mean = momentum * running_mean + (1 - momentum) * mu
-        running_var = momentum * running_var + (1 - momentum) * var
 
         # Stuff to return
         out = X_out
@@ -259,6 +255,9 @@ def batchnorm_backward(dout, cache):
     - dgamma: Gradient with respect to scale parameter gamma, of shape (D,)
     - dbeta: Gradient with respect to shift parameter beta, of shape (D,)
     """
+
+    X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps = cache
+
     dx, dgamma, dbeta = None, None, None
     ###########################################################################
     # TODO: Implement the backward pass for batch normalization. Store the    #
@@ -266,7 +265,28 @@ def batchnorm_backward(dout, cache):
     # Referencing the original paper (https://arxiv.org/abs/1502.03167)       #
     # might prove to be helpful.                                              #
     ###########################################################################
-    pass
+    N, D = dout.shape
+    d_X_out = dout
+
+    # Batch norm layer - backward pass
+    d_beta = np.sum(d_X_out, axis = 0)             # 9.
+    d_X_gamma = d_X_out                            # 9.
+    d_X_hat = gamma * d_X_gamma                    # 8.
+    d_gamma = np.sum(X_hat * d_X_gamma, axis=0)  # 8.
+    d_X_num = den * d_X_hat                        # 7.
+    d_den = np.sum(X_num * d_X_hat, axis=0)        # 7.
+    d_sd = -1. / sd**2 * d_den                      # 6.
+    d_var = 0.5 * 1 / np.sqrt(var + eps) * d_sd            # 5.
+    d_X_centsq = 1 / N * np.ones_like(d_var) * d_var   # 4.
+    d_X_cent = 2 * X_cent * d_X_centsq             # 3.
+    d_X_1 = d_X_cent + d_X_num                     # 2.
+    d_mu  = -1 * np.sum(d_X_cent + d_X_num, axis=0)   # 2.
+    d_X_2 = 1 / N * np.ones_like(d_X_out) * d_mu         # 1.
+    d_X = (d_X_1 + d_X_2)                        # 0.
+
+    dgamma = d_gamma
+    dbeta = d_beta
+    dx = d_X
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
