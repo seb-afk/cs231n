@@ -156,6 +156,9 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     running_var = bn_param.get('running_var', np.zeros(D, dtype=x.dtype))
 
     out, cache = None, None
+
+    # Variable referencing
+    X = x
     if mode == 'train':
         #######################################################################
         # TODO: Implement the training-time forward pass for batch norm.      #
@@ -178,7 +181,26 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # Referencing the original paper (https://arxiv.org/abs/1502.03167)   #
         # might prove to be helpful.                                          #
         #######################################################################
-        pass
+        
+        # Batch norm layer - forward pass
+        mu = np.mean(X, axis=0)          # 1.
+        X_cent = X - mu                  # 2.
+        X_num = X_cent                   # 2.
+        X_centsq = X_cent ** 2           # 3.
+        var = np.mean(X_centsq, axis=0)  # 4.
+        sd = np.sqrt(var + eps)          # 5.
+        den = 1 / sd                     # 6.
+        X_hat = X_num * den              # 7.
+        X_gamma = gamma * X_hat          # 8.
+        X_out = X_gamma + beta           # 9.
+
+        # Calculate running mean
+        running_mean = momentum * running_mean + (1 - momentum) * mu
+        running_var = momentum * running_var + (1 - momentum) * var
+
+        # Stuff to return
+        out = X_out
+        cache = (X_cent, var, sd, X_num, den, X_hat)
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -189,7 +211,24 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+        # Batch norm layer - forward pass
+        mu = running_mean                # (1.)
+        X_cent = X - mu                  # 2.
+        X_num = X_cent                   # 2.
+        X_centsq = X_cent ** 2           # 3.
+        var = running_var                # (4.)
+        sd = np.sqrt(var + eps)          # 5.
+        den = 1 / sd                     # 6.
+        X_hat = X_num * den              # 7.
+        X_gamma = gamma * X_hat          # 8.
+        X_out = X_gamma + beta           # 9.
+
+        # Calculate running mean
+        running_mean = momentum * running_mean + (1 - momentum) * mu
+        running_var = momentum * running_var + (1 - momentum) * var
+
+        # Stuff to return
+        out = X_out
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
