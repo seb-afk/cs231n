@@ -269,20 +269,20 @@ def batchnorm_backward(dout, cache):
     d_X_out = dout
 
     # Batch norm layer - backward pass
-    d_beta = np.sum(d_X_out, axis = 0)             # 9.
-    d_X_gamma = d_X_out                            # 9.
-    d_X_hat = gamma * d_X_gamma                    # 8.
-    d_gamma = np.sum(X_hat * d_X_gamma, axis=0)  # 8.
-    d_X_num = den * d_X_hat                        # 7.
-    d_den = np.sum(X_num * d_X_hat, axis=0)        # 7.
-    d_sd = -1. / sd**2 * d_den                      # 6.
-    d_var = 0.5 * 1 / np.sqrt(var + eps) * d_sd            # 5.
-    d_X_centsq = 1 / N * np.ones_like(d_var) * d_var   # 4.
-    d_X_cent = 2 * X_cent * d_X_centsq             # 3.
-    d_X_1 = d_X_cent + d_X_num                     # 2.
+    d_beta = np.sum(d_X_out, axis = 0)                # 9.
+    d_X_gamma = d_X_out                               # 9.
+    d_X_hat = gamma * d_X_gamma                       # 8.
+    d_gamma = np.sum(X_hat * d_X_gamma, axis=0)       # 8.
+    d_X_num = den * d_X_hat                           # 7.
+    d_den = np.sum(X_num * d_X_hat, axis=0)           # 7.
+    d_sd = -1. / sd**2 * d_den                        # 6.
+    d_var = 0.5 * 1 / np.sqrt(var + eps) * d_sd       # 5.
+    d_X_centsq = 1 / N * np.ones_like(d_var) * d_var  # 4.
+    d_X_cent = 2 * X_cent * d_X_centsq                # 3.
+    d_X_1 = d_X_cent + d_X_num                        # 2.
     d_mu  = -1 * np.sum(d_X_cent + d_X_num, axis=0)   # 2.
-    d_X_2 = 1 / N * np.ones_like(d_X_out) * d_mu         # 1.
-    d_X = (d_X_1 + d_X_2)                        # 0.
+    d_X_2 = 1 / N * np.ones_like(d_X_out) * d_mu      # 1.
+    d_X = (d_X_1 + d_X_2)                             # 0.
 
     dgamma = d_gamma
     dbeta = d_beta
@@ -317,7 +317,6 @@ def batchnorm_backward_alt(dout, cache):
     # should be able to compute gradients with respect to the inputs in a     #
     # single statement; our implementation fits on a single 80-character line.#
     ###########################################################################
-    # cache = (X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps)
     X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps = cache
     d_X_out = dout
     N, D = dout.shape
@@ -329,10 +328,6 @@ def batchnorm_backward_alt(dout, cache):
     dx = (1/(N*sd) * 
            (N* d_X_hat - np.sum(d_X_hat, axis=0) - X_hat * np.sum(d_X_hat*X_hat, axis=0))
           )
-
-    # dgamma = d_gamma
-    # dbeta = d_beta
-    # dx = d_X
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -374,7 +369,21 @@ def layernorm_forward(x, gamma, beta, ln_param):
     # transformations you could perform, that would enable you to copy over   #
     # the batch norm code and leave it almost unchanged?                      #
     ###########################################################################
-    pass
+    X = x.T
+    mu = np.mean(X, axis=0)          # 1.
+    X_cent = X - mu                                # 2.
+    X_num = X_cent                                 # 2.
+    X_centsq = X_cent ** 2                         # 3.
+    var = np.mean(X_centsq, axis=0)  # 4.
+    sd = np.sqrt(var + eps)                        # 5.
+    den = 1 / sd                                   # 6.
+    X_hat = X_num * den                            # 7.
+    X_gamma = gamma.reshape(-1,1) * X_hat                        # 8.
+    X_out = X_gamma + beta.reshape(-1,1)                         # 9.
+
+    # Stuff to return
+    out = X_out.T
+    cache = (X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -405,11 +414,47 @@ def layernorm_backward(dout, cache):
     # implementation of batch normalization. The hints to the forward pass    #
     # still apply!                                                            #
     ###########################################################################
-    pass
+    X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps = cache
+
+    d_X_out = dout.T
+    N, D = d_X_out.shape
+
+    # Batch norm layer - backward pass
+    d_beta = np.sum(d_X_out, axis = 1)                # 9.
+    d_X_gamma = d_X_out                               # 9.
+    d_X_hat = gamma.reshape(-1,1) * d_X_gamma                       # 8.
+    d_gamma = np.sum(X_hat * d_X_gamma, axis=1)       # 8.
+    d_X_num = den * d_X_hat                           # 7.
+    d_den = np.sum(X_num * d_X_hat, axis=0)           # 7.
+    d_sd = -1. / sd**2 * d_den                        # 6.
+    d_var = 0.5 * 1 / np.sqrt(var + eps) * d_sd       # 5.
+    d_X_centsq = 1 / N * np.ones_like(d_var) * d_var  # 4.
+    d_X_cent = 2 * X_cent * d_X_centsq                # 3.
+    d_X_1 = d_X_cent + d_X_num                        # 2.
+    d_mu  = -1 * np.sum(d_X_cent + d_X_num, axis=0)   # 2.
+    d_X_2 = 1 / N * np.ones_like(d_X_out) * d_mu      # 1.
+    d_X = (d_X_1 + d_X_2)                             # 0.
+
+    dgamma = d_gamma
+    dbeta = d_beta
+    dx = d_X
+    
+    
+    # X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps = cache
+    # d_X_out = dout.T
+    # N, D = d_X_out.shape
+
+    # dbeta = np.sum(d_X_out, axis=1) # Upstream gradient summed over each observation.
+    # dgamma = np.sum(d_X_out * X_hat, axis=1)
+
+    # d_X_hat = d_X_out*gamma.reshape(-1,1)  #intermediate calculation
+    # dx = (1/(N*sd) * 
+    #     (N* d_X_hat - np.sum(d_X_hat, axis=0) - X_hat * np.sum(d_X_hat*X_hat, axis=0))
+    #     )
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    return dx, dgamma, dbeta
+    return dx.T, dgamma, dbeta
 
 
 def dropout_forward(x, dropout_param):
