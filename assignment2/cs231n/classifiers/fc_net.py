@@ -12,7 +12,6 @@ def softmax(x):
     probs = np.exp(log_probs)
     return probs
 
-
 def affine_bn_relu_forward(x, w, b, gamma, beta, bn_param):
     """
     Convenience layer that performs an affine transform, followed by a batch
@@ -132,7 +131,7 @@ def affine_ln_relu_backward(dout, cache):
     """
     fc_cache, ln_cache, relu_cache = cache
     dy_ln = relu_backward(dout, relu_cache)
-    dy_affine, dgamma, dbeta  = batchnorm_backward(dy_ln, ln_cache)
+    dy_affine, dgamma, dbeta  = layernorm_backward(dy_ln, ln_cache)
     dx, dw, db = affine_backward(dy_affine, fc_cache)
     
     return dx, dw, db, dgamma, dbeta
@@ -270,7 +269,6 @@ class TwoLayerNet(object):
 
         return loss, grads
 
-
 class FullyConnectedNet(object):
     """
     A fully-connected neural network with an arbitrary number of hidden layers,
@@ -407,8 +405,9 @@ class FullyConnectedNet(object):
         
         activation = X
         cache_list = list()
+        cache_dropout = list()
 
-        # (AFFINE -> [BatchNorm | Layernorm] -> RELU) * (L-1)
+        # (AFFINE -> [BatchNorm | Layernorm] -> RELU -> [Dropout]) * (L-1)
         for layer_index in range(1, self.num_layers):
             activation_prev = activation
             
@@ -435,6 +434,10 @@ class FullyConnectedNet(object):
                     self.params["gamma"+str(layer_index)],
                     self.params["beta"+str(layer_index)],
                     self.bn_params[layer_index-1])
+
+            if self.use_dropout:
+                activation, do_cache = dropout_forward(activation, self.dropout_param)
+                cache_dropout.append(do_cache)
 
             cache_list.append(cache)
 
@@ -482,8 +485,11 @@ class FullyConnectedNet(object):
 
         # (AFFINE -> [BatchNorm] -> RELU) * (L-1) 
         for layer_index in reversed(range(1, self.num_layers)):
+            if self.use_dropout:
+                do_cache = cache_dropout[layer_index-1]
+                dout = dropout_backward(dout, do_cache)
+
             cache = cache_list[layer_index-1]
-            
             if self.normalization == None:
                 dout, dw, db = affine_relu_backward(dout, cache)
 
@@ -496,7 +502,6 @@ class FullyConnectedNet(object):
                 dout, dw, db, dgamma, dbeta = affine_ln_relu_backward(dout, cache)
                 grads["gamma"+str(layer_index)] = dgamma
                 grads["beta"+str(layer_index)] = dbeta
-
 
             grads["W"+str(layer_index)] = dw + self.reg * cache[0][1]
             grads["b"+str(layer_index)] = db
