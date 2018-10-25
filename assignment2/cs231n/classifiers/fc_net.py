@@ -269,7 +269,7 @@ class FullyConnectedNet(object):
             self.params["W"+str(layer_index)] = weight_scale * np.random.randn(l_size_prev, l_size)
             self.params["b"+str(layer_index)] = np.zeros(l_size)
 
-        if normalization == "batchnorm":
+        if (normalization == "batchnorm") or (normalization == "layernorm"):
             for layer_index in range(1, self.num_layers):
                 l_size = dims[layer_index]
                 # Initialise batchnorm layers
@@ -279,7 +279,7 @@ class FullyConnectedNet(object):
 
         ############################################################################
         #                             END OF YOUR CODE                             #
-        if (normalization == "batchnorm") or (normalization == "layernorm"):
+        ############################################################################
 
         # When using dropout we need to pass a dropout_param dictionary to each
         # dropout layer so that the layer knows the dropout probability and the mode
