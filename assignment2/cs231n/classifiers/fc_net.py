@@ -26,6 +26,16 @@ def affine_bn_relu_forward(x, w, b, gamma, beta, bn_param):
         Weights for the affine layer
     b : Numpy array
         Bias terms for the affine layer
+    gamma : Numpy array (D,)
+        Scaling parameter.
+    beta : Numpy array (D,)
+        Bias parameter.
+    bn_param: Dictionary with the following keys:
+        mode: 'train' or 'test'; required
+        eps: Constant for numeric stability
+        momentum: Constant for running mean / variance.
+        running_mean: Array of shape (D,) giving running mean of features
+        running_var Array of shape (D,) giving running variance of features
 
     Returns
     -------
