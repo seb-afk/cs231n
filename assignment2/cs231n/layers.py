@@ -573,7 +573,47 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    # Get parameters
+    n, channels, height, width = x.shape
+    k_filters, channels, f_spatial_ext, _ = w.shape
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+    images_convoluted= list()
+    results = list()
+    w = w.reshape(w.shape[0], -1)
+    b = b.reshape(-1,1)
+
+
+    check_size = (((width-f_spatial_ext+2*pad)/stride+1) * 1.)
+    if not check_size.is_integer():
+        print("Neurons do not fit.")
+
+    # Pad input data with zeros.
+    x_padded = np.pad(x, 
+                  pad_width=((0,0), (0,0),(pad,pad), (pad,pad)), 
+                  mode="constant", constant_values=0)
+
+    height_padded = height + 2 * pad
+    width_padded = width + 2 * pad
+
+    # Convolve input data
+    for ix in range(n):
+        convolution = list()
+        for w_ix in range(0, width_padded-f_spatial_ext+1, stride):
+            for h_ix in range(0, height_padded-f_spatial_ext+1, stride):
+                convolution.append(x_padded[ix,:, h_ix:h_ix+f_spatial_ext, w_ix:w_ix+f_spatial_ext].flatten())
+        x_col = np.stack(convolution, axis=0).T
+        images_convoluted.append(x_col)
+
+    h_out = int(1 + (height + 2 * pad - f_spatial_ext) / stride)
+    w_out = int(1 + (width + 2 * pad - f_spatial_ext) / stride)
+
+    for img in images_convoluted:
+        tmp = np.transpose((w.dot(img)+b).reshape(k_filters, h_out, w_out), 
+                           axes=[0,2,1])
+        results.append(tmp)
+        
+    out = np.stack(results, axis=0)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
