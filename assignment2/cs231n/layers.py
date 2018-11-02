@@ -2,6 +2,37 @@ from builtins import range
 import numpy as np
 
 
+def convolute_x(x, f_spatial_ext, stride):
+    """
+    Convolutes a 2D layer into a x_col layer.
+    
+    Parameters
+    ----------
+    
+    x : 3D Numpy array. Shape ( C, H, W)
+        Data to be convoluted.
+    
+    f_spatial_ext : int
+        Filtersize
+        
+    stride : int
+        Stride 
+        
+    Returns
+    -------
+    
+    x_col : 2D Numpy array
+        Convoluted array.
+    """
+    width , height = x.shape
+    convolution = list()
+    for h_ix in range(0, height-f_spatial_ext+1, stride):
+        for w_ix in range(0, width-f_spatial_ext+1, stride):
+            convolution.append(x[h_ix:h_ix+f_spatial_ext, w_ix:w_ix+f_spatial_ext].flatten())
+    x_col = np.stack(convolution, axis=0).T
+    return x_col
+
+
 def affine_forward(x, w, b):
     """
     Computes the forward pass for an affine (fully-connected) layer.
@@ -370,16 +401,16 @@ def layernorm_forward(x, gamma, beta, ln_param):
     # the batch norm code and leave it almost unchanged?                      #
     ###########################################################################
     X = x.T
-    mu = np.mean(X, axis=0)          # 1.
+    mu = np.mean(X, axis=0)                        # 1.
     X_cent = X - mu                                # 2.
     X_num = X_cent                                 # 2.
     X_centsq = X_cent ** 2                         # 3.
-    var = np.mean(X_centsq, axis=0)  # 4.
+    var = np.mean(X_centsq, axis=0)                # 4.
     sd = np.sqrt(var + eps)                        # 5.
     den = 1 / sd                                   # 6.
     X_hat = X_num * den                            # 7.
-    X_gamma = gamma.reshape(-1,1) * X_hat                        # 8.
-    X_out = X_gamma + beta.reshape(-1,1)                         # 9.
+    X_gamma = gamma.reshape(-1,1) * X_hat          # 8.
+    X_out = X_gamma + beta.reshape(-1,1)           # 9.
 
     # Stuff to return
     out = X_out.T
@@ -422,7 +453,7 @@ def layernorm_backward(dout, cache):
     # Batch norm layer - backward pass
     d_beta = np.sum(d_X_out, axis = 1)                # 9.
     d_X_gamma = d_X_out                               # 9.
-    d_X_hat = gamma.reshape(-1,1) * d_X_gamma                       # 8.
+    d_X_hat = gamma.reshape(-1,1) * d_X_gamma         # 8.
     d_gamma = np.sum(X_hat * d_X_gamma, axis=1)       # 8.
     d_X_num = den * d_X_hat                           # 7.
     d_den = np.sum(X_num * d_X_hat, axis=0)           # 7.
@@ -580,7 +611,7 @@ def conv_forward_naive(x, w, b, conv_param):
     pad = conv_param["pad"]
     images_convoluted= list()
     results = list()
-    w = w.reshape(w.shape[0], -1)
+    w_n = w.reshape(w.shape[0], -1)
     b = b.reshape(-1,1)
 
 
@@ -609,7 +640,7 @@ def conv_forward_naive(x, w, b, conv_param):
     w_out = int(1 + (width + 2 * pad - f_spatial_ext) / stride)
 
     for img in images_convoluted:
-        tmp = np.transpose((w.dot(img)+b).reshape(k_filters, h_out, w_out), 
+        tmp = np.transpose((w_n.dot(img)+b).reshape(k_filters, h_out, w_out), 
                            axes=[0,2,1])
         results.append(tmp)
         
@@ -645,45 +676,21 @@ def conv_backward_naive(dout, cache):
     k_filters, channels, f_spatial_ext, _ = w.shape
     stride = conv_param["stride"]
     pad = conv_param["pad"]
-    images_convoluted= list()
-    results = list()
-    w_n = w.reshape(w.shape[0], -1)
-    b = b.reshape(-1,1)
-
+    
     # Pad x data
     x_padded = np.pad(x, 
                 pad_width=((0,0), (0,0),(pad,pad), (pad,pad)), 
                 mode="constant", constant_values=0)
 
-    height_padded = height + 2 * pad
-    width_padded = width + 2 * pad
-
-    # Convolve input data
-    images_convoluted = list()
-    for ix in range(n):
-        convolution = list()
-        for w_ix in range(0, width_padded-f_spatial_ext+1, stride):
-            for h_ix in range(0, height_padded-f_spatial_ext+1, stride):
-                convolution.append(x_padded[ix,:, h_ix:h_ix+f_spatial_ext, w_ix:w_ix+f_spatial_ext].flatten())
-        x_col = np.stack(convolution, axis=0).T
-        images_convoluted.append(x_col)
-
-    dw = np.zeros_like(w_n.T)
-    db = np.zeros_like(b)
-    for ix in range(n):
-        
-        print(ix)
-        dout_n = dout[ix].reshape(k_filters,-1)
-        print(x_col.shape, dout_n.shape)
-        dw += x_col * dout_n
-        #dw += x_col.dot(dout_n)
-        db += np.sum(dout_n, axis=0, keepdims=True).T
-        
-    dw = dw / n
-    db = db / n
-    dw = dw.reshape(w.shape)
-
-
+    dw = np.zeros_like(w)
+    db = np.zeros(shape=3)
+    for img_ix in range(n):
+        for filter_ix in range (k_filters):
+            for channel_ix in range(channels):
+                x_col = convolute_x(x_padded[img_ix, channel_ix], f_spatial_ext, stride).T  
+                dw[filter_ix, channel_ix] += np.dot(dout[img_ix, filter_ix].reshape(1,-1), x_col).reshape(dw[filter_ix, channel_ix].shape)
+    
+    dw = dw
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
