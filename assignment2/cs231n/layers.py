@@ -638,7 +638,52 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    x, w, b, conv_param = cache
+
+    # Get parameters
+    n, channels, height, width = x.shape
+    k_filters, channels, f_spatial_ext, _ = w.shape
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+    images_convoluted= list()
+    results = list()
+    w_n = w.reshape(w.shape[0], -1)
+    b = b.reshape(-1,1)
+
+    # Pad x data
+    x_padded = np.pad(x, 
+                pad_width=((0,0), (0,0),(pad,pad), (pad,pad)), 
+                mode="constant", constant_values=0)
+
+    height_padded = height + 2 * pad
+    width_padded = width + 2 * pad
+
+    # Convolve input data
+    images_convoluted = list()
+    for ix in range(n):
+        convolution = list()
+        for w_ix in range(0, width_padded-f_spatial_ext+1, stride):
+            for h_ix in range(0, height_padded-f_spatial_ext+1, stride):
+                convolution.append(x_padded[ix,:, h_ix:h_ix+f_spatial_ext, w_ix:w_ix+f_spatial_ext].flatten())
+        x_col = np.stack(convolution, axis=0).T
+        images_convoluted.append(x_col)
+
+    dw = np.zeros_like(w_n.T)
+    db = np.zeros_like(b)
+    for ix in range(n):
+        
+        print(ix)
+        dout_n = dout[ix].reshape(k_filters,-1)
+        print(x_col.shape, dout_n.shape)
+        dw += x_col * dout_n
+        #dw += x_col.dot(dout_n)
+        db += np.sum(dout_n, axis=0, keepdims=True).T
+        
+    dw = dw / n
+    db = db / n
+    dw = dw.reshape(w.shape)
+
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
