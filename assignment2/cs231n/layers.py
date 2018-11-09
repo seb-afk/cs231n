@@ -736,7 +736,21 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max-pooling forward pass                            #
     ###########################################################################
-    pass
+    pool_height = pool_param["pool_height"]
+    pool_width = pool_param["pool_width"]  # TODO is this needed?
+    stride = pool_param["stride"]
+    n, channels, height, width = x.shape
+    h_dash = int(1 + (height - pool_height) / stride)
+    w_dash = int(1 + (height - pool_height) / stride)
+
+    image_list = list()
+    for img_ix in range(n):
+        channel_list = list()
+        for channel_ix in range(channels):
+            x_col = convolute_x(x[img_ix, channel_ix], f_spatial_ext=pool_height, stride=stride)
+            channel_list.append(np.max(x_col, axis=0).reshape(h_dash, w_dash))
+        image_list.append(np.stack(channel_list))
+    out = np.stack(image_list)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -759,27 +773,7 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max-pooling backward pass                           #
     ###########################################################################
-    x = cache[0]
-    pool_param = cache[1]
-    dx = np.zeros_like(x)
-    f_spatial_ext = pool_param["pool_height"]
-    stride = pool_param["stride"]
-    n, channels, height, width = x.shape
-
-    for img_ix in range(n):
-        for channel_ix in range(channels):
-            dout_h = 0
-            for h_ix in range(0, height-f_spatial_ext+1, stride):
-                dout_w = 0
-                for w_ix in range(0, width-f_spatial_ext+1, stride):
-                    width_index, height_index = (list(range(h_ix,h_ix+f_spatial_ext)),list(range(w_ix,w_ix+f_spatial_ext)))
-                    indeces = np.array([np.repeat(width_index, len(height_index)), np.tile(height_index, len(width_index))]).T
-                    argmax_ix = x[img_ix, channel_ix, indeces[:,0], indeces[:,1]].argmax()
-                    winning_ix = tuple(indeces[argmax_ix])
-                    dx[img_ix, channel_ix, winning_ix[0], winning_ix[1]] = dout[img_ix, channel_ix, dout_h, dout_w]
-                    dout_w += 1
-                dout_h += 1
-
+    pass
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
