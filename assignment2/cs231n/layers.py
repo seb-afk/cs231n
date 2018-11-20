@@ -915,7 +915,20 @@ def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     # the bulk of the code is similar to both train-time batch normalization  #
     # and layer normalization!                                                # 
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+    X = x.reshape(N, G, C // G, H, W)
+    mu = np.mean(X, axis=(2,3,4), keepdims=True)          # 1.
+    X_cent = X - mu                                       # 2.
+    X_num = X_cent                                        # 2.
+    X_centsq = X_cent ** 2                                # 3.
+    var = np.mean(X_centsq, axis=(2,3,4), keepdims=True)  # 4.
+    sd = np.sqrt(var + eps)                               # 5.
+    den = 1 / sd                                          # 6.
+    X_hat = X_num * den                                   # 7.
+    X_hat = X_hat.reshape((N,C,H,W))
+    X_gamma = gamma * X_hat                               # 8.
+    out = X_gamma + beta                                  # 9.
+    cache = (X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
