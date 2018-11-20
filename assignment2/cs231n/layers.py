@@ -954,7 +954,14 @@ def spatial_groupnorm_backward(dout, cache):
     # TODO: Implement the backward pass for spatial group normalization.      #
     # This will be extremely similar to the layer norm implementation.        #
     ###########################################################################
-    pass
+    X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps = cache
+
+    d_X_out = dout
+    N, C, H, W = d_X_out.shape
+    dbeta = np.sum(d_X_out, axis=(0,2,3), keepdims=True)                 # 9.
+    d_X_gamma = d_X_out                               # 9.
+    d_X_hat = gamma * d_X_gamma         # 8.
+    dgamma = np.sum(X_hat * d_X_gamma, axis=(0,2,3), keepdims=True)# 8.
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
