@@ -54,6 +54,7 @@ def softmax_loss_naive(W, X, y, reg):
     # Average loss, average gradient
     # loss = loss / num_train
     dW = dW / num_train
+    loss = loss / num_train
 
     return loss, dW
 
@@ -92,5 +93,6 @@ def softmax_loss_vectorized(W, X, y, reg):
     # Average loss, average gradient
     # loss = loss / num_train
     dW = dW / num_train
+    loss = loss / num_train
 
     return loss, dW
