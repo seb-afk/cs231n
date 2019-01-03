@@ -93,6 +93,7 @@ def affine_backward(dout, cache):
     ###########################################################################
     return dx, dw, db
 
+
 def relu_forward(x):
     """
     Computes the forward pass for a layer of rectified linear units (ReLUs).
