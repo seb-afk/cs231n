@@ -5,22 +5,22 @@ import numpy as np
 def convolute_x(x, f_spatial_ext, stride):
     """
     Convolutes a 2D layer into a x_col layer.
-    
+
     Parameters
     ----------
-    
+
     x : 2D Numpy array. Shape (H, W)
         Data to be convoluted.
-    
+
     f_spatial_ext : int
         Filtersize
-        
+
     stride : int
-        Stride 
-        
+        Stride
+
     Returns
     -------
-    
+
     x_col : 2D Numpy array
         Convoluted array with each convolution as a column.
     """
@@ -209,11 +209,11 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #                                                                     #
         # Note that though you should be keeping track of the running         #
         # variance, you should normalize the data based on the standard       #
-        # deviation (square root of variance) instead!                        # 
+        # deviation (square root of variance) instead!                        #
         # Referencing the original paper (https://arxiv.org/abs/1502.03167)   #
         # might prove to be helpful.                                          #
         #######################################################################
-        
+
         # Batch norm layer - forward pass
         mu = np.mean(X, axis=0)          # 1.
         X_cent = X - mu                  # 2.
@@ -332,9 +332,9 @@ def batchnorm_backward_alt(dout, cache):
 
     For this implementation you should work out the derivatives for the batch
     normalizaton backward pass on paper and simplify as much as possible. You
-    should be able to derive a simple expression for the backward pass. 
+    should be able to derive a simple expression for the backward pass.
     See the jupyter notebook for more hints.
-     
+
     Note: This implementation should expect to receive the same cache variable
     as batchnorm_backward, but might not use all of the values in the cache.
 
@@ -357,9 +357,9 @@ def batchnorm_backward_alt(dout, cache):
     dgamma = np.sum(d_X_out * X_hat, axis=0)
 
     d_X_hat = d_X_out*gamma  #intermediate calculation
-    dx = (1/(N*sd) * 
-           (N* d_X_hat - np.sum(d_X_hat, axis=0) - X_hat * np.sum(d_X_hat*X_hat, axis=0))
-          )
+    dx = (1/(N*sd) *
+         (N* d_X_hat - np.sum(d_X_hat, axis=0) -
+         X_hat * np.sum(d_X_hat*X_hat, axis=0)))
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -373,7 +373,7 @@ def layernorm_forward(x, gamma, beta, ln_param):
 
     During both training and test-time, the incoming data is normalized per data-point,
     before being scaled by gamma and beta parameters identical to that of batch normalization.
-    
+
     Note that in contrast to batch normalization, the behavior during train and test-time for
     layer normalization are identical, and we do not need to keep track of running averages
     of any sort.
@@ -469,24 +469,11 @@ def layernorm_backward(dout, cache):
 
     dgamma = d_gamma
     dbeta = d_beta
-    dx = d_X
-    
-    
-    # X_cent, var, sd, X_num, den, X_hat, X_gamma, gamma, eps = cache
-    # d_X_out = dout.T
-    # N, D = d_X_out.shape
-
-    # dbeta = np.sum(d_X_out, axis=1) # Upstream gradient summed over each observation.
-    # dgamma = np.sum(d_X_out * X_hat, axis=1)
-
-    # d_X_hat = d_X_out*gamma.reshape(-1,1)  #intermediate calculation
-    # dx = (1/(N*sd) * 
-    #     (N* d_X_hat - np.sum(d_X_hat, axis=0) - X_hat * np.sum(d_X_hat*X_hat, axis=0))
-    #     )
+    dx = d_X.T
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    return dx.T, dgamma, dbeta
+    return dx, dgamma, dbeta
 
 
 def dropout_forward(x, dropout_param):
@@ -587,8 +574,7 @@ def conv_forward_naive(x, w, b, conv_param):
     - conv_param: A dictionary with the following keys:
       - 'stride': The number of pixels between adjacent receptive fields in the
         horizontal and vertical directions.
-      - 'pad': The number of pixels that will be used to zero-pad the input. 
-        
+      - 'pad': The number of pixels that will be used to zero-pad the input.
 
     During padding, 'pad' zeros should be placed symmetrically (i.e equally on both sides)
     along the height and width axes of the input. Be careful not to modfiy the original
@@ -621,8 +607,8 @@ def conv_forward_naive(x, w, b, conv_param):
         print("Neurons do not fit.")
 
     # Pad input data with zeros.
-    x_padded = np.pad(x, 
-                  pad_width=((0,0), (0,0),(pad,pad), (pad,pad)), 
+    x_padded = np.pad(x,
+                  pad_width=((0,0), (0,0),(pad,pad), (pad,pad)),
                   mode="constant", constant_values=0)
 
     height_padded = height + 2 * pad
@@ -641,10 +627,10 @@ def conv_forward_naive(x, w, b, conv_param):
     w_out = int(1 + (width + 2 * pad - f_spatial_ext) / stride)
 
     for img in images_convoluted:
-        tmp = np.transpose((w_n.dot(img)+b).reshape(k_filters, h_out, w_out), 
+        tmp = np.transpose((w_n.dot(img)+b).reshape(k_filters, h_out, w_out),
                            axes=[0,2,1])
         results.append(tmp)
-        
+
     out = np.stack(results, axis=0)
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -677,11 +663,10 @@ def conv_backward_naive(dout, cache):
     k_filters, channels, f_spatial_ext, _ = w.shape
     stride = conv_param["stride"]
     pad = conv_param["pad"]
-    print(pad)
-    
+
     # Pad x data
-    x_padded = np.pad(x, 
-                pad_width=((0,0), (0,0),(pad,pad), (pad,pad)), 
+    x_padded = np.pad(x,
+                pad_width=((0,0), (0,0),(pad,pad), (pad,pad)),
                 mode="constant", constant_values=0)
 
     dw = np.zeros_like(w)
@@ -691,28 +676,22 @@ def conv_backward_naive(dout, cache):
     for img_ix in range(n):
         for filter_ix in range (k_filters):
             for channel_ix in range(channels):
-                x_col = convolute_x(x_padded[img_ix, channel_ix], f_spatial_ext, stride).T  
+                x_col = convolute_x(x_padded[img_ix, channel_ix], f_spatial_ext, stride).T
                 dw[filter_ix, channel_ix] += np.dot(dout[img_ix, filter_ix].reshape(1,-1), x_col).reshape(dw[filter_ix, channel_ix].shape)
         db += np.sum(dout[img_ix].reshape(k_filters,-1), axis=1).reshape(-1,1)
 
     # preparation to get dx
     pad_dout = pad
-    dout_padded = np.pad(dout, pad_width=((0,0), (0,0), (pad_dout,pad_dout), (pad_dout,pad_dout )), 
+    dout_padded = np.pad(dout, pad_width=((0,0), (0,0), (pad_dout,pad_dout), (pad_dout,pad_dout )),
                          mode="constant", constant_values=0)
 
     # get derivative with respect to x
     for img_ix in range(n):
         for filter_ix in range (k_filters):
             for channel_ix in range(channels):
-                        
                 w_flipped = np.rot90(w[filter_ix, channel_ix], 2)
                 dout_padded_conv = convolute_x(x=dout_padded[img_ix, filter_ix,], f_spatial_ext=f_spatial_ext, stride=stride)
-                # print(np.dot(w_flipped.reshape(1,-1), dout_padded_conv).shape)
-                # print(w_flipped.reshape(1,-1).shape)
-                # TODO FIX THIS bug
                 dx[img_ix, channel_ix] += np.dot(w_flipped.reshape(1,-1), dout_padded_conv).reshape(width, height)
-    
-    dw = dw
     db = db.flatten()
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -731,7 +710,7 @@ def max_pool_forward_naive(x, pool_param):
       - 'pool_width': The width of each pooling region
       - 'stride': The distance between adjacent pooling regions
 
-    No padding is necessary here. Output size is given by 
+    No padding is necessary here. Output size is given by
 
     Returns a tuple of:
     - out: Output data, of shape (N, C, H', W') where H' and W' are given by
@@ -891,7 +870,7 @@ def spatial_batchnorm_backward(dout, cache):
 def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     """
     Computes the forward pass for spatial group normalization.
-    In contrast to layer normalization, group normalization splits each entry 
+    In contrast to layer normalization, group normalization splits each entry
     in the data into G contiguous pieces, which it then normalizes independently.
     Per feature shifting and scaling are then applied to the data, in a manner identical to that of batch normalization and layer normalization.
 
@@ -914,7 +893,7 @@ def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     # This will be extremely similar to the layer norm implementation.        #
     # In particular, think about how you could transform the matrix so that   #
     # the bulk of the code is similar to both train-time batch normalization  #
-    # and layer normalization!                                                # 
+    # and layer normalization!                                                #
     ###########################################################################
     N, C, H, W = x.shape
     X = x.reshape(N, G, C // G, H, W)
