@@ -266,17 +266,6 @@ class Solver(object):
         for t in range(num_iterations):
             self._step()
 
-            # # Maybe print training loss
-            # if self.verbose and t % self.print_every == 0:
-            #     print('(Iteration %d / %d) loss: %f' % (
-            #            t + 1, num_iterations, self.loss_history[-1]))
-
-            # SEB log training error
-            if self.verbose and t % self.print_every == 0:
-              msg = "Iteration {} / {} loss: {}".format(
-                     t + 1, num_iterations, self.loss_history[-1])
-              logging.debug(msg)
-
             # At the end of every epoch, increment the epoch counter and decay
             # the learning rate.
             epoch_end = (t + 1) % iterations_per_epoch == 0
@@ -301,7 +290,7 @@ class Solver(object):
                 if self.verbose:
                     msg = ('(Epoch %d / %d) train acc: %f; val_acc: %f' % (
                            self.epoch, self.num_epochs, train_acc, val_acc))
-                    logging.info(msg)
+                    print(msg)
 
                 # Keep track of the best model
                 if val_acc > self.best_val_acc:

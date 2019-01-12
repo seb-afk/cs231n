@@ -672,7 +672,6 @@ def conv_backward_naive(dout, cache):
     dw = np.zeros_like(w)
     db = np.zeros_like(b)
     dx = np.zeros_like(x)
-    dx = np.ones_like(x)
     for img_ix in range(n):
         for filter_ix in range (k_filters):
             for channel_ix in range(channels):
@@ -680,23 +679,10 @@ def conv_backward_naive(dout, cache):
                 dw[filter_ix, channel_ix] += np.dot(dout[img_ix, filter_ix].reshape(1,-1), x_col).reshape(dw[filter_ix, channel_ix].shape)
         db += np.sum(dout[img_ix].reshape(k_filters,-1), axis=1).reshape(-1,1)
 
-    # preparation to get dx
-    pad_dout = pad
-    dout_padded = np.pad(dout, pad_width=((0,0), (0,0), (pad_dout,pad_dout), (pad_dout,pad_dout )),
-                         mode="constant", constant_values=0)
-
-    # get derivative with respect to x
-    for img_ix in range(n):
-        for filter_ix in range (k_filters):
-            for channel_ix in range(channels):
-                w_flipped = np.rot90(w[filter_ix, channel_ix], 2)
-                dout_padded_conv = convolute_x(x=dout_padded[img_ix, filter_ix,], f_spatial_ext=f_spatial_ext, stride=stride)
-                dx[img_ix, channel_ix] += np.dot(w_flipped.reshape(1,-1), dout_padded_conv).reshape(width, height)
-    db = db.flatten()
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    return dx, dw, db
+    return dx, dw, db.flatten()
 
 
 def max_pool_forward_naive(x, pool_param):
