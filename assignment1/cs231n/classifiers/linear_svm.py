@@ -29,9 +29,9 @@ def svm_loss_naive(W, X, y, reg):
     loss = 0.0
     for i in range(num_train):  # Loop through training examples
         scores = X[i].dot(W)  # The class score is a dot product between X and W
-        correct_class_score = scores[
-            y[i]]  # Score assigned to the correct class
-        for j in range(num_classes):  # Compute hinge loss by looping though classes
+        correct_class_score = scores[y[i]]  # Score assigned to the correct class
+        for j in range(
+                num_classes):  # Compute hinge loss by looping though classes
             if j == y[i]:  # no need to compute loss for correct class
                 continue
             margin = scores[j] - correct_class_score + 1  # note delta = 1
