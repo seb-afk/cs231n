@@ -10,3 +10,5 @@ assignment2/logs/*
 assignment2/cs231n/.vscode/settings.json
 assignment2/cs231n/datasets/
 assignment3/cs231n/datasets/
+.vscode/*
+*/.ipynb_checkpoints/*
