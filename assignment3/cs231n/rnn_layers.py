@@ -111,7 +111,20 @@ def rnn_forward(x, h0, Wx, Wh, b):
     # input data. You should use the rnn_step_forward function that you defined  #
     # above. You can use a for loop to help compute the forward pass.            #
     ##############################################################################
-    pass
+    N, T, D = x.shape
+    H = b.shape
+
+    hidden_states = list()
+    caches_timestep = list()
+
+    current_h = h0
+    for t_i in range(T):
+        next_h, next_cache = rnn_step_forward(x[:,t_i,:], current_h, Wx, Wh, b)
+        hidden_states.append(next_h)
+        caches_timestep.append(next_cache)
+        current_h = next_h
+    h = np.array(hidden_states).transpose((1,0,2))
+    cache = caches_timestep
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -143,7 +156,27 @@ def rnn_backward(dh, cache):
     # sequence of data. You should use the rnn_step_backward function that you   #
     # defined above. You can use a for loop to help compute the backward pass.   #
     ##############################################################################
-    pass
+    gradients_timestep = list()
+    T = len(cache)
+
+    dx, dprev_h, dWx, dWh, db = 0, 0, 0, 0, 0
+    dWx_tot, dWh_tot, db_tot = 0, 0, 0
+    dx_tot, dprev_h_tot = [None] * T, [None] * T
+
+    for t_i in reversed(range(T)):
+        dnext_h = dh[:,t_i,:] + dprev_h
+        dx, dprev_h, dWx, dWh, db = rnn_step_backward(dnext_h, cache[t_i])
+
+        dx_tot[t_i] = dx
+        dprev_h_tot[t_i] = dprev_h
+        dWx_tot += dWx
+        dWh_tot += dWh
+        db_tot += db
+
+    dx_tot = np.array(dx_tot).transpose(1,0,2)
+    #dprev_h_tot = np.array(dprev_h_tot).sum(axis=0)
+
+    dx, dh0, dWx, dWh, db = dx_tot, dprev_h_tot[0], dWx_tot, dWh_tot, db_tot
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
