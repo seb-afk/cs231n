@@ -159,8 +159,7 @@ def rnn_backward(dh, cache):
     gradients_timestep = list()
     T = len(cache)
 
-    dx, dprev_h, dWx, dWh, db = 0, 0, 0, 0, 0
-    dWx_tot, dWh_tot, db_tot = 0, 0, 0
+    dx, dprev_h, dWx, dWh, db, dWx_tot, dWh_tot, db_tot = [0]*8
     dx_tot, dprev_h_tot = [None] * T, [None] * T
 
     for t_i in reversed(range(T)):
