@@ -234,7 +234,37 @@ class CaptioningRNN(object):
         # NOTE: we are still working over minibatches in this function. Also if   #
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
-        pass
+        h0, _ = affine_forward(features, W_proj, b_proj)
+        ##print("h0", h0.shape)
+        t0 = np.array([self._start]*N).reshape(N,1)
+        #print("t0", t0.shape)
+        we0, _ = word_embedding_forward(t0, W_embed)
+        we0 = we0.squeeze()
+        #print("we", we0.shape)
+        h, _ = rnn_step_forward(we0, h0, Wx, Wh, b)
+        #print("h", h.shape)
+        h = np.expand_dims(h,1)
+        s0, _ = temporal_affine_forward(h,W_vocab,b_vocab)
+        #print("s0", s0.shape)
+        t = np.argmax(s0, axis=2).flatten()
+        captions[:,0] = t
+        t = t.reshape(-1,1)
+        #print("t", t.shape)
+        ##print(captions)
+
+        for t_i in range(1, max_length):
+          we, _ = word_embedding_forward(t, W_embed)
+          we = we.squeeze()
+          #print("we", we.shape)
+          h = h.squeeze()
+          h, _ = rnn_step_forward(we, h, Wx, Wh, b)
+          #print("h", h.shape)
+          h = np.expand_dims(h,1)
+          s, _ = temporal_affine_forward(h,W_vocab,b_vocab)
+          t = np.argmax(s, axis=2).flatten()
+          captions[:, t_i] = t
+          t = t.reshape(-1,1)
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
