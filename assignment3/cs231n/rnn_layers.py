@@ -112,7 +112,7 @@ def rnn_forward(x, h0, Wx, Wh, b):
     # above. You can use a for loop to help compute the forward pass.            #
     ##############################################################################
     N, T, D = x.shape
-    H = b.shape
+    #H = b.shape
 
     hidden_states = list()
     caches_timestep = list()
@@ -165,7 +165,6 @@ def rnn_backward(dh, cache):
     for t_i in reversed(range(T)):
         dnext_h = dh[:,t_i,:] + dprev_h
         dx, dprev_h, dWx, dWh, db = rnn_step_backward(dnext_h, cache[t_i])
-
         dx_tot[t_i] = dx
         dprev_h_tot[t_i] = dprev_h
         dWx_tot += dWx
@@ -173,8 +172,6 @@ def rnn_backward(dh, cache):
         db_tot += db
 
     dx_tot = np.array(dx_tot).transpose(1,0,2)
-    #dprev_h_tot = np.array(dprev_h_tot).sum(axis=0)
-
     dx, dh0, dWx, dWh, db = dx_tot, dprev_h_tot[0], dWx_tot, dWh_tot, db_tot
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -204,6 +201,7 @@ def word_embedding_forward(x, W):
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
     out = W[x.flatten(),:].reshape((*(x.shape),-1))
+    cache = (W, x)  # TODO - needed?
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -232,7 +230,13 @@ def word_embedding_backward(dout, cache):
     # Note that words can appear more than once in a sequence.                   #
     # HINT: Look up the function np.add.at                                       #
     ##############################################################################
-    pass
+    W, x = cache
+    N = x.shape[0]
+    dW = np.zeros_like(W)
+    # Solution from https://github.com/mesuvash
+    for i in range(N):
+        indices = x[i, :]
+        np.add.at(dW, indices, dout[i, :, :])
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
