@@ -232,7 +232,13 @@ def word_embedding_backward(dout, cache):
     ##############################################################################
     W, x = cache
     N = x.shape[0]
+    W, x = cache
+    N = x.shape[0]
     dW = np.zeros_like(W)
+    # Solution from https://github.com/mesuvash
+    for i in range(N):
+        indices = x[i, :]
+        np.add.at(dW, indices, dout[i, :, :])
     # Solution from https://github.com/mesuvash
     for i in range(N):
         indices = x[i, :]
