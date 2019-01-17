@@ -143,7 +143,6 @@ class CaptioningRNN(object):
         h0, cache_h0 = affine_forward(features, W_proj, b_proj)  # (1)
         word_embeddings, cache_embeddings = word_embedding_forward(captions_in, W_embed)  # (2)
 
-        # TODO replace underscores with variables for cache.
         if self.cell_type == "rnn":
           H, cache_H = rnn_forward(word_embeddings, h0, Wx, Wh, b)  # (3)
           scores, cache_scores = temporal_affine_forward(H,W_vocab,b_vocab)  # (4)
