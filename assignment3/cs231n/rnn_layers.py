@@ -316,7 +316,35 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
     # the output value from the nonlinearity.                                   #
     #############################################################################
-    pass
+    N = dnext_h.shape[0]
+    (g_f, prev_c, g_o, next_c, tanh_next_c, a_o, g_i, g_g, a_i, a_f, a_g, 
+     Wx, x, Wh, prev_h) = cache
+    
+    # Calculate derivatives
+    dtanh_next_c = g_o * dnext_h                           # 1
+    dg_o = tanh_next_c * dnext_h                           # 1
+    dnext_c_2 = (1 - (np.tanh(next_c))**2) * dtanh_next_c  # 2
+    dnext_c_total = dnext_c + dnext_c_2  # Accumulate gradients from branches
+    dg_f_prev_c = dnext_c_total                            # 3
+    dg_i_g_g = dnext_c_total                               # 3
+    dprev_c = g_f * dg_f_prev_c                            # 4
+    dg_f = prev_c * dg_f_prev_c                            # 4
+    da_o = sigmoid(a_o) * (1 - sigmoid(a_o)) * dg_o        # 5
+    dg_g = g_i * dg_i_g_g                                  # 6
+    dg_i = g_g * dg_i_g_g                                  # 6
+    da_g = (1 - (np.tanh(a_g))**2) * dg_g                  # 7
+    da_i = sigmoid(a_i) * (1 - sigmoid(a_i)) * dg_i        # 8
+    da_f = sigmoid(a_f) * (1 - sigmoid(a_f)) * dg_f        # 9
+
+    dactivation_vector = np.concatenate([da_i, da_f, da_o, da_g], axis=1)
+    dx = dactivation_vector.dot(Wx.T)
+    dWx = x.T.dot(dactivation_vector)
+    dprev_h = dactivation_vector.dot(Wh.T)
+    dWh = prev_h.T.dot(dactivation_vector)
+    db = np.sum(dactivation_vector, axis = 0)
+
+
+
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
