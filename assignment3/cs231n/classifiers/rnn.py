@@ -149,17 +149,17 @@ class CaptioningRNN(object):
           H, cache_H = lstm_forward(word_embeddings, h0, Wx, Wh, b)  # (3)
         else:
           raise ValueError(self.cell_type, " is an invalid cell type")
-          scores, cache_scores = temporal_affine_forward(H,W_vocab,b_vocab)  # (4)
-          loss, dscores = temporal_softmax_loss(scores, captions_out, mask)  # (5)
+        scores, cache_scores = temporal_affine_forward(H,W_vocab,b_vocab)  # (4)
+        loss, dscores = temporal_softmax_loss(scores, captions_out, mask)  # (5)
 
         # Backward pass
-          dH, dW_vocab, db_vocab = temporal_affine_backward(dscores, cache_scores)  # (4)
+        dH, dW_vocab, db_vocab = temporal_affine_backward(dscores, cache_scores)  # (4)
         if self.cell_type == "rnn":
           dword_embeddings, dh0, dW_word_embeddings, dWh, db = rnn_backward(dH, cache_H)  # (3)
         elif self.cell_type == "lstm":
           dword_embeddings, dh0, dW_word_embeddings, dWh, db = lstm_backward(dH, cache_H)  # (3)
-          dW_embed = word_embedding_backward(dword_embeddings, cache_embeddings) # (2)
-          dfeatures, dW_proj, db_proj = affine_backward(dh0, cache_h0)  # (1)
+        dW_embed = word_embedding_backward(dword_embeddings, cache_embeddings) # (2)
+        dfeatures, dW_proj, db_proj = affine_backward(dh0, cache_h0)  # (1)
 
         # Store parameters
         grads["W_vocab"] = dW_vocab
@@ -236,35 +236,38 @@ class CaptioningRNN(object):
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
         h0, _ = affine_forward(features, W_proj, b_proj)
-        ##print("h0", h0.shape)
         t0 = np.array([self._start]*N).reshape(N,1)
-        #print("t0", t0.shape)
         we0, _ = word_embedding_forward(t0, W_embed)
         we0 = we0.squeeze()
-        #print("we", we0.shape)
-        h, _ = rnn_step_forward(we0, h0, Wx, Wh, b)
-        #print("h", h.shape)
+
+        if self.cell_type == "rnn":
+          h, _ = rnn_step_forward(we0, h0, Wx, Wh, b)
+        elif self.cell_type == "lstm":
+          next_c = np.zeros_like(h0)
+          h, next_c, _ = lstm_step_forward(we0, h0, next_c, Wx, Wh, b)
+        else:
+          raise ValueError(self.cell_type, " is an invalid cell type")
+        
         h = np.expand_dims(h,1)
         s0, _ = temporal_affine_forward(h,W_vocab,b_vocab)
-        #print("s0", s0.shape)
         t = np.argmax(s0, axis=2).flatten()
         captions[:,0] = t
         t = t.reshape(-1,1)
-        #print("t", t.shape)
-        ##print(captions)
 
         for t_i in range(1, max_length):
           we, _ = word_embedding_forward(t, W_embed)
           we = we.squeeze()
-          #print("we", we.shape)
           h = h.squeeze()
-          h, _ = rnn_step_forward(we, h, Wx, Wh, b)
-          #print("h", h.shape)
+          
+          if self.cell_type == "rnn":
+            h, _ = rnn_step_forward(we0, h, Wx, Wh, b)
+          elif self.cell_type == "lstm":
+            h, next_c, _ = lstm_step_forward(we0, h, next_c, Wx, Wh, b)
+          
           h = np.expand_dims(h,1)
           s, _ = temporal_affine_forward(h,W_vocab,b_vocab)
           t = np.argmax(s, axis=2).flatten()
           captions[:, t_i] = t
-          t = t.reshape(-1,1)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
