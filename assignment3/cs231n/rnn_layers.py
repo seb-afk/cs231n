@@ -296,7 +296,6 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     next_c = g_f_prev_c + g_i_g_g
     tanh_next_c = np.tanh(next_c)
     next_h = g_o * tanh_next_c
-    # TODO Cache
     cache = (g_f, prev_c, g_o, next_c, tanh_next_c, a_o, g_i, g_g, a_i, a_f, a_g, 
              Wx, x, Wh, prev_h)
     ##############################################################################
@@ -356,9 +355,6 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     dprev_h = dactivation_vector.dot(Wh.T)
     dWh = prev_h.T.dot(dactivation_vector)
     db = np.sum(dactivation_vector, axis = 0)
-
-
-
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -552,3 +548,4 @@ def temporal_softmax_loss(x, y, mask, verbose=False):
     dx = dx_flat.reshape(N, T, V)
 
     return loss, dx
+
