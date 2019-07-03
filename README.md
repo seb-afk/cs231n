@@ -13,9 +13,7 @@ WIP These are my solutions
 
 ## Setup
 
-## Project structure
-
-## Acknowledgments
+## Acknowledgments
 
 - The authors of CS231n that have developed this amazing course and made it available to everyone.
 - [Frederik Kratzert](https://github.com/kratzert) for this incredibly helpful 
